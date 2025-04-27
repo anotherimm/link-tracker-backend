@@ -2,28 +2,14 @@
     "version": 2,
     "builds": [
         {
-            "src": "api/**/*.js",
+            "src": "src/index.js",
             "use": "@vercel/node"
         }
     ],
-    "headers": [
+    "routes": [
         {
-            "source": "/api/(.*)",
-            "headers": [
-                {
-                    "key": "Access-Control-Allow-Origin",
-                    "value": "https://anotherimm.github.io"
-                },
-                {
-                    "key": "Access-Control-Allow-Methods",
-                    "value": "GET, POST, OPTIONS"
-                },
-                {
-                    "key": "Access-Control-Allow-Headers",
-                    "value": "Content-Type"
-                }
-            ]
+            "src": "/api/(.*)",
+            "dest": "src/index.js"
         }
-    ],
-    "cleanUrls": true
+    ]
 }
