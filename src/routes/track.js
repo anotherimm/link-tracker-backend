@@ -9,6 +9,7 @@ router.get('/:linkId', async (req, res) => {
     console.log('Request to /track:', req.method, req.url, req.params);
     const { linkId } = req.params;
 
+    // Ambil data tujuan dari Supabase
     const { data, error } = await supabase
         .from('links')
         .select('destination')
@@ -21,14 +22,21 @@ router.get('/:linkId', async (req, res) => {
     }
 
     const ip = req.headers['x-forwarded-for'] || req.ip;
-    let geoData = { country: 'Tidak diketahui', city: 'Tidak diketahui' };
+    let geoData = {
+        latitude: null,
+        longitude: null,
+        country: 'Tidak diketahui',
+        city: 'Tidak diketahui'
+    };
 
     try {
-        const geoResponse = await fetch(`https://ipapi.co/${ip}/json/`);
+        const geoResponse = await fetch(`https://ipwhois.app/json/${ip}`);
         const geo = await geoResponse.json();
         if (!geo.error) {
             geoData = {
-                country: geo.country_name || 'Tidak diketahui',
+                latitude: geo.latitude || null,
+                longitude: geo.longitude || null,
+                country: geo.country || 'Tidak diketahui',
                 city: geo.city || 'Tidak diketahui'
             };
         }
@@ -36,9 +44,15 @@ router.get('/:linkId', async (req, res) => {
         console.error('Geolocation error:', e);
     }
 
+    // Simpan lat,lon ke kolom `ip` sebagai string
+    const latlon = geoData.latitude && geoData.longitude
+        ? `${geoData.latitude},${geoData.longitude}`
+        : 'Tidak diketahui';
+
+    // Simpan ke tabel clicks
     await supabase.from('clicks').insert([{
         link_id: linkId,
-        ip,
+        ip: latlon, // latlon disimpan di kolom `ip`
         country: geoData.country,
         city: geoData.city,
         timestamp: new Date().toISOString()
